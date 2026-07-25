@@ -9,6 +9,7 @@ Code lives in [`trading/`](trading/):
 - **Phase 3:** Dashboard UI — price, RSI, trend, CALL/PUT actions
 - **Phase 4:** Options bias — strike + Call/Put strength
 - **Phase 5:** Multi-market — US, India, UK, Asia
+- **Phase 6:** Cron sync — `update_prices.php` every 5 minutes
 - Status page: `trading/public/`
 
 See [`trading/README.md`](trading/README.md) for setup.

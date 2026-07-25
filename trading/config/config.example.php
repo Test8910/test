@@ -16,6 +16,8 @@ return [
     ],
     // Lookback window when ingesting from Yahoo Finance
     'history_range' => '1y',
+    // Shorter window for cron sync (enough to catch latest bars)
+    'sync_range' => '1mo',
     // Pause between symbol requests to reduce rate-limit risk
     'request_delay_ms' => 400,
 ];

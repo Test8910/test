@@ -16,9 +16,11 @@ $config = require dirname(__DIR__) . '/src/bootstrap.php';
 try {
     $repo = new PriceRepository(Database::connection($config));
     $assets = $repo->summaryWithRsi(RsiCalculator::DEFAULT_PERIOD);
+    $lastSync = $repo->latestSyncRun();
     $error = null;
 } catch (Throwable $e) {
     $assets = [];
+    $lastSync = null;
     $error = $e->getMessage();
 }
 
@@ -73,6 +75,23 @@ foreach ($assets as $asset) {
       letter-spacing: -0.02em;
     }
     .subtitle { margin: 0; color: var(--muted); line-height: 1.5; }
+
+    .sync-bar {
+      margin-top: 0.9rem;
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 0.55rem 0.85rem;
+      align-items: center;
+      padding: 0.55rem 0.8rem;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.22);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+    .sync-ok { color: var(--up); font-weight: 700; }
+    .sync-error { color: var(--down); font-weight: 700; }
+    .sync-partial, .sync-running { color: var(--neutral); font-weight: 700; }
 
     .error {
       background: #3a1d1d;
@@ -258,8 +277,34 @@ foreach ($assets as $asset) {
     <header>
       <h1>Trading Dashboard</h1>
       <p class="subtitle">
-        Phase 5 — multi-market tracking across US, India, UK, and Asia.
+        Phase 6 — multi-market dashboard with scheduled price + RSI sync.
       </p>
+      <?php if ($lastSync !== null): ?>
+        <?php
+          $syncClass = match ($lastSync['status']) {
+              'ok' => 'sync-ok',
+              'error' => 'sync-error',
+              'partial' => 'sync-partial',
+              default => 'sync-running',
+          };
+          $syncTime = $lastSync['finished_at'] ?? $lastSync['started_at'];
+        ?>
+        <div class="sync-bar">
+          <span>Last sync:</span>
+          <strong><?= htmlspecialchars((string) $syncTime, ENT_QUOTES, 'UTF-8') ?></strong>
+          <span class="<?= $syncClass ?>"><?= htmlspecialchars(strtoupper((string) $lastSync['status']), ENT_QUOTES, 'UTF-8') ?></span>
+          <span>
+            <?= (int) $lastSync['symbols_ok'] ?> ok
+            <?php if ((int) $lastSync['symbols_failed'] > 0): ?>
+              · <?= (int) $lastSync['symbols_failed'] ?> failed
+            <?php endif; ?>
+          </span>
+        </div>
+      <?php else: ?>
+        <div class="sync-bar">
+          No sync yet — run <code>php update_prices.php</code> or install the cron job.
+        </div>
+      <?php endif; ?>
     </header>
 
     <?php if ($error !== null): ?>

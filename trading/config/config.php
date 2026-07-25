@@ -12,5 +12,6 @@ return [
         'charset' => 'utf8mb4',
     ],
     'history_range' => '1y',
+    'sync_range' => '1mo',
     'request_delay_ms' => 400,
 ];

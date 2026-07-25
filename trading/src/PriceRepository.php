@@ -202,4 +202,64 @@ final class PriceRepository
 
         return $rows;
     }
+
+    public function latestDate(string $symbol): ?string
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT MAX(date) AS d FROM prices WHERE symbol = :symbol'
+        );
+        $stmt->execute([':symbol' => $symbol]);
+        $value = $stmt->fetchColumn();
+
+        return $value === false || $value === null ? null : (string) $value;
+    }
+
+    public function upsertRsiSnapshot(
+        string $symbol,
+        int $period,
+        string $asOfDate,
+        float $rsi,
+        string $signal
+    ): void {
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO rsi_snapshots (symbol, period, as_of_date, rsi, rsi_signal, calculated_at)
+             VALUES (:symbol, :period, :as_of_date, :rsi, :rsi_signal, NOW())
+             ON DUPLICATE KEY UPDATE
+               as_of_date = VALUES(as_of_date),
+               rsi = VALUES(rsi),
+               rsi_signal = VALUES(rsi_signal),
+               calculated_at = VALUES(calculated_at)'
+        );
+        $stmt->execute([
+            ':symbol' => $symbol,
+            ':period' => $period,
+            ':as_of_date' => $asOfDate,
+            ':rsi' => $rsi,
+            ':rsi_signal' => $signal,
+        ]);
+    }
+
+    /**
+     * @return array{
+     *   id: int,
+     *   started_at: string,
+     *   finished_at: ?string,
+     *   status: string,
+     *   symbols_ok: int,
+     *   symbols_failed: int,
+     *   message: ?string
+     * }|null
+     */
+    public function latestSyncRun(): ?array
+    {
+        $stmt = $this->pdo->query(
+            'SELECT id, started_at, finished_at, status, symbols_ok, symbols_failed, message
+             FROM sync_runs
+             ORDER BY id DESC
+             LIMIT 1'
+        );
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $row;
+    }
 }

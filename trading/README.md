@@ -127,12 +127,39 @@ Put Bias:  Strong (closer to realistic move)
 ## Phase 5 — Multi-market tracking
 
 ```bash
-# existing DB: refresh symbol universe
+# existing DB: add sort_order (skip if already present), then refresh symbols
+mysql -u root -p -e "ALTER TABLE trading_dashboard.symbols ADD COLUMN sort_order INT NOT NULL DEFAULT 100 AFTER market;"
 mysql -u root -p < database/migrate_phase5_symbols.sql
 php bin/ingest_prices.php
 ```
 
 Dashboard groups assets by region (US / India / UK / Asia).
+
+## Phase 6 — Synchronization (cron)
+
+`update_prices.php` keeps markets fresh:
+
+1. Fetch latest prices  
+2. Store in MySQL  
+3. Recalculate RSI snapshots  
+
+```bash
+# one-time schema bits (existing DB)
+mysql -u root -p < database/migrate_phase6_sync.sql
+
+# run once
+php update_prices.php
+
+# cron every 5 minutes
+crontab -e
+# add:
+# every 5 min -> /usr/bin/php /ABS/PATH/TO/trading/update_prices.php >> /ABS/PATH/TO/trading/storage/sync.log 2>&1
+# crontab timing field: (star)/5 * * * *
+```
+
+Sample crontab file: `cron/trading-dashboard`
+
+The dashboard header shows the last sync status.
 
 ## Next (optional)
 
