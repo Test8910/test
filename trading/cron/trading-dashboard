@@ -1,0 +1,11 @@
+# End-of-day sync at US market close: 4:00 PM America/New_York
+# Monday–Friday only. update_prices.php also skips listed US holidays.
+#
+# Install:
+#   crontab -e
+#   paste below (edit absolute paths)
+#
+# CRON_TZ makes "16:00" mean 4:00 PM Eastern (EST/EDT).
+
+CRON_TZ=America/New_York
+0 16 * * 1-5 /usr/bin/php /workspace/trading/update_prices.php >> /workspace/trading/storage/sync.log 2>&1
