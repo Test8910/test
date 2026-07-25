@@ -135,26 +135,29 @@ php bin/ingest_prices.php
 
 Dashboard groups assets by region (US / India / UK / Asia).
 
-## Phase 6 — Synchronization (cron)
+## Phase 6 — Synchronization (EOD cron)
 
-`update_prices.php` keeps markets fresh:
+`update_prices.php` runs at **US market close**:
 
-1. Fetch latest prices  
+1. Fetch latest prices (if today’s daily `close` is still null, use live price)  
 2. Store in MySQL  
 3. Recalculate RSI snapshots  
+4. Refresh smart signals  
+
+**Schedule:** 4:00 PM `America/New_York`, Monday–Friday  
+**Skipped:** weekends + listed US holidays (use `--force` to override)
 
 ```bash
 # one-time schema bits (existing DB)
 mysql -u root -p < database/migrate_phase6_sync.sql
 
-# run once
-php update_prices.php
+# run once (force on weekend/holiday if needed)
+php update_prices.php --force
 
-# cron every 5 minutes
+# install cron
 crontab -e
-# add:
-# every 5 min -> /usr/bin/php /ABS/PATH/TO/trading/update_prices.php >> /ABS/PATH/TO/trading/storage/sync.log 2>&1
-# crontab timing field: (star)/5 * * * *
+# CRON_TZ=America/New_York
+# 0 16 * * 1-5 /usr/bin/php /ABS/PATH/TO/trading/update_prices.php >> /ABS/PATH/TO/trading/storage/sync.log 2>&1
 ```
 
 Sample crontab file: `cron/trading-dashboard`

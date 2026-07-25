@@ -4,20 +4,20 @@
 declare(strict_types=1);
 
 /**
- * Phase 6 — synchronization entrypoint for cron.
+ * End-of-day synchronization entrypoint for cron.
  *
- * Cron example (every 5 minutes):
- *   every-5-min: php /path/to/trading/update_prices.php >> /path/to/trading/storage/sync.log 2>&1
- *   Crontab expression: star-slash-5 star star star star
+ * Runs at US market close (4:00 PM America/New_York), Monday–Friday,
+ * and skips weekends + listed US holidays (unless --force).
  *
  * What it does:
- *   1) Fetch latest OHLC prices
+ *   1) Fetch latest OHLC prices (uses live price if today's daily close is still null)
  *   2) Store / upsert into MySQL
  *   3) Recalculate RSI snapshots
  *   4) Run Smart Signal Engine (RSI + move + trend)
  */
 
 use Trading\Database;
+use Trading\MarketCalendar;
 use Trading\PriceRepository;
 use Trading\PriceSync;
 use Trading\RsiCalculator;
@@ -25,9 +25,18 @@ use Trading\YahooFinanceClient;
 
 $config = require __DIR__ . '/src/bootstrap.php';
 
-$options = getopt('', ['range::', 'period::', 'help']);
+$options = getopt('', ['range::', 'period::', 'force', 'help']);
 if (isset($options['help'])) {
-    echo "Usage: php update_prices.php [--range=1mo] [--period=14]\n";
+    echo "Usage: php update_prices.php [--range=1mo] [--period=14] [--force]\n";
+    echo "  --force   run even on weekends / US holidays\n";
+    exit(0);
+}
+
+$force = isset($options['force']);
+$skip = MarketCalendar::skipReason();
+if (!$force && $skip !== null) {
+    $nowEt = MarketCalendar::nowEt()->format('Y-m-d H:i:s T');
+    echo "[{$nowEt}] Skipping sync: {$skip}\n";
     exit(0);
 }
 
@@ -41,8 +50,8 @@ $pdo = Database::connection($config);
 $repo = new PriceRepository($pdo);
 $sync = new PriceSync($pdo, $repo, new YahooFinanceClient(), $delayMs);
 
-$started = date('c');
-echo "[{$started}] Starting price sync (range={$range}, rsi={$period})\n";
+$started = MarketCalendar::nowEt()->format('c');
+echo "[{$started}] Starting EOD price sync (range={$range}, rsi={$period})\n";
 
 $result = $sync->run($range, $period);
 
@@ -64,7 +73,7 @@ foreach ($result['results'] as $row) {
 
 echo sprintf(
     "[%s] Done status=%s ok=%d failed=%d run_id=%d\n",
-    date('c'),
+    MarketCalendar::nowEt()->format('c'),
     $result['status'],
     $result['symbols_ok'],
     $result['symbols_failed'],

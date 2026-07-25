@@ -48,6 +48,9 @@ final class YahooFinanceClient
 
         $timestamps = $result['timestamp'] ?? [];
         $quote = $result['indicators']['quote'][0] ?? [];
+        $meta = $result['meta'] ?? [];
+        $gmtOffset = (int) ($meta['gmtoffset'] ?? 0);
+        $livePrice = isset($meta['regularMarketPrice']) ? (float) $meta['regularMarketPrice'] : null;
 
         if ($timestamps === [] || $quote === []) {
             throw new RuntimeException("Empty OHLC series for {$yahooSymbol}");
@@ -60,14 +63,23 @@ final class YahooFinanceClient
         $volumes = $quote['volume'] ?? [];
 
         $rows = [];
+        $lastIndex = count($timestamps) - 1;
+
         foreach ($timestamps as $i => $ts) {
             $close = $closes[$i] ?? null;
+
+            // At/after the 4:00 PM close, Yahoo often leaves today's daily close null
+            // for a while. Use the live regularMarketPrice as the EOD close proxy.
+            if ($close === null && $i === $lastIndex && $livePrice !== null) {
+                $close = $livePrice;
+            }
+
             if ($close === null) {
                 continue;
             }
 
             $rows[] = [
-                'date' => gmdate('Y-m-d', (int) $ts),
+                'date' => gmdate('Y-m-d', (int) $ts + $gmtOffset),
                 'open' => isset($opens[$i]) && $opens[$i] !== null ? (float) $opens[$i] : null,
                 'high' => isset($highs[$i]) && $highs[$i] !== null ? (float) $highs[$i] : null,
                 'low' => isset($lows[$i]) && $lows[$i] !== null ? (float) $lows[$i] : null,

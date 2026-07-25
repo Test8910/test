@@ -1,8 +1,11 @@
-# Phase 6 — refresh prices + RSI every 5 minutes
+# End-of-day sync at US market close: 4:00 PM America/New_York
+# Monday–Friday only. update_prices.php also skips listed US holidays.
+#
 # Install:
 #   crontab -e
-#   # paste the line below (edit the absolute path)
+#   paste below (edit absolute paths)
 #
-# */5 * * * * /usr/bin/php /ABS/PATH/TO/trading/update_prices.php >> /ABS/PATH/TO/trading/storage/sync.log 2>&1
+# CRON_TZ makes "16:00" mean 4:00 PM Eastern (EST/EDT).
 
-*/5 * * * * /usr/bin/php /workspace/trading/update_prices.php >> /workspace/trading/storage/sync.log 2>&1
+CRON_TZ=America/New_York
+0 16 * * 1-5 /usr/bin/php /workspace/trading/update_prices.php >> /workspace/trading/storage/sync.log 2>&1

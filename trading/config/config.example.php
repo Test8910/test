@@ -20,4 +20,7 @@ return [
     'sync_range' => '1mo',
     // Pause between symbol requests to reduce rate-limit risk
     'request_delay_ms' => 400,
+    // EOD cron: 4:00 PM America/New_York, Mon–Fri (holidays skipped in update_prices.php)
+    'eod_timezone' => 'America/New_York',
+    'eod_hour' => 16,
 ];

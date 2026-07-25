@@ -347,7 +347,7 @@ foreach ($assets as $asset) {
     <header>
       <h1>Trading Dashboard</h1>
       <p class="subtitle">
-        Phases 1–7 live · Phase 8 roadmap for options chain, IV, Greeks, backtesting.
+        EOD sync at 4:00 PM America/New_York, Mon–Fri (skips weekends &amp; US holidays).
       </p>
       <?php if ($lastSync !== null): ?>
         <?php
@@ -372,7 +372,7 @@ foreach ($assets as $asset) {
         </div>
       <?php else: ?>
         <div class="sync-bar">
-          No sync yet — run <code>php update_prices.php</code> or install the cron job.
+          No sync yet — cron at 4:00 PM ET Mon–Fri, or run <code>php update_prices.php --force</code>.
         </div>
       <?php endif; ?>
     </header>
