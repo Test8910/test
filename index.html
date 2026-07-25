@@ -3,21 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Northshore — Coastal Ceramics</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <title>Hello World</title>
     <style>
       :root {
-        --ink: #1a2a2e;
-        --sea: #2f5d62;
-        --foam: #e8f0ee;
-        --sand: #d9c4a5;
-        --clay: #c47a4a;
-        --mist: rgba(232, 240, 238, 0.88);
+        --ink: #1c2430;
+        --sky: #6eb6ff;
+        --foam: #f3f7fb;
       }
 
       * {
@@ -26,267 +17,39 @@
         padding: 0;
       }
 
-      html {
-        scroll-behavior: smooth;
-      }
-
       body {
-        font-family: "Manrope", sans-serif;
-        color: var(--ink);
-        background: var(--foam);
-        line-height: 1.5;
-        min-height: 100vh;
-      }
-
-      .hero {
-        position: relative;
         min-height: 100vh;
         min-height: 100dvh;
         display: grid;
-        align-items: end;
-        overflow: hidden;
-        color: var(--foam);
+        place-items: center;
+        font-family: Georgia, "Times New Roman", serif;
+        color: var(--ink);
         background:
-          linear-gradient(
-            160deg,
-            rgba(26, 42, 46, 0.55) 0%,
-            rgba(47, 93, 98, 0.35) 45%,
-            rgba(26, 42, 46, 0.7) 100%
-          ),
-          url("https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=2000&q=80")
-            center / cover no-repeat;
-        animation: hero-drift 18s ease-in-out infinite alternate;
+          radial-gradient(circle at 20% 20%, rgba(110, 182, 255, 0.35), transparent 40%),
+          radial-gradient(circle at 80% 70%, rgba(120, 200, 170, 0.28), transparent 45%),
+          linear-gradient(160deg, #eef4fa 0%, var(--foam) 50%, #e7eef6 100%);
       }
 
-      @keyframes hero-drift {
+      h1 {
+        font-size: clamp(2.5rem, 8vw, 5rem);
+        font-weight: 400;
+        letter-spacing: -0.02em;
+        animation: fade-up 0.8s ease both;
+      }
+
+      @keyframes fade-up {
         from {
-          background-position: center 40%;
+          opacity: 0;
+          transform: translateY(12px);
         }
-        to {
-          background-position: center 60%;
-        }
-      }
-
-      .hero::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(
-          ellipse 80% 50% at 50% 100%,
-          rgba(26, 42, 46, 0.55),
-          transparent 70%
-        );
-        pointer-events: none;
-      }
-
-      .hero-inner {
-        position: relative;
-        z-index: 1;
-        width: min(920px, calc(100% - 3rem));
-        margin: 0 auto 4.5rem;
-        opacity: 0;
-        transform: translateY(28px);
-        animation: rise-in 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.15s forwards;
-      }
-
-      @keyframes rise-in {
         to {
           opacity: 1;
           transform: translateY(0);
         }
       }
-
-      .brand {
-        font-family: "Instrument Serif", Georgia, serif;
-        font-size: clamp(3.2rem, 9vw, 6.5rem);
-        font-weight: 400;
-        letter-spacing: -0.02em;
-        line-height: 0.95;
-        margin-bottom: 1.25rem;
-      }
-
-      .headline {
-        font-family: "Instrument Serif", Georgia, serif;
-        font-size: clamp(1.35rem, 3.2vw, 1.85rem);
-        font-style: italic;
-        font-weight: 400;
-        max-width: 22ch;
-        margin-bottom: 0.75rem;
-        color: var(--sand);
-      }
-
-      .lede {
-        font-size: 1.05rem;
-        font-weight: 400;
-        max-width: 36ch;
-        color: var(--mist);
-        margin-bottom: 1.75rem;
-      }
-
-      .cta {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.6rem;
-        padding: 0.95rem 1.4rem;
-        background: var(--clay);
-        color: #fffaf5;
-        text-decoration: none;
-        font-size: 0.95rem;
-        font-weight: 600;
-        letter-spacing: 0.02em;
-        border: none;
-        border-radius: 2px;
-        transition: transform 0.35s ease, background 0.35s ease, box-shadow 0.35s ease;
-        box-shadow: 0 10px 30px rgba(26, 42, 46, 0.25);
-      }
-
-      .cta:hover {
-        background: #b06838;
-        transform: translateY(-2px);
-        box-shadow: 0 14px 36px rgba(26, 42, 46, 0.35);
-      }
-
-      .cta:focus-visible {
-        outline: 2px solid var(--sand);
-        outline-offset: 3px;
-      }
-
-      .cta svg {
-        width: 1rem;
-        height: 1rem;
-        transition: transform 0.35s ease;
-      }
-
-      .cta:hover svg {
-        transform: translateX(4px);
-      }
-
-      .about {
-        padding: clamp(4rem, 10vw, 7rem) 1.5rem;
-        background:
-          linear-gradient(180deg, #eef5f3 0%, #e8f0ee 55%, #dde9e5 100%);
-      }
-
-      .about-inner {
-        width: min(640px, 100%);
-        margin: 0 auto;
-        opacity: 0;
-        transform: translateY(20px);
-        transition: opacity 0.9s ease, transform 0.9s ease;
-      }
-
-      .about-inner.is-visible {
-        opacity: 1;
-        transform: translateY(0);
-      }
-
-      .about h2 {
-        font-family: "Instrument Serif", Georgia, serif;
-        font-size: clamp(2rem, 4vw, 2.75rem);
-        font-weight: 400;
-        margin-bottom: 1rem;
-        color: var(--sea);
-      }
-
-      .about p {
-        font-size: 1.05rem;
-        color: #3d5155;
-        max-width: 48ch;
-      }
-
-      footer {
-        padding: 1.5rem;
-        text-align: center;
-        font-size: 0.85rem;
-        color: #5a7276;
-        background: #dde9e5;
-      }
-
-      @media (max-width: 640px) {
-        .hero-inner {
-          margin-bottom: 3rem;
-        }
-
-        .brand {
-          margin-bottom: 1rem;
-        }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        .hero,
-        .hero-inner,
-        .cta,
-        .cta svg,
-        .about-inner {
-          animation: none !important;
-          transition: none !important;
-        }
-
-        .hero-inner,
-        .about-inner {
-          opacity: 1;
-          transform: none;
-        }
-      }
     </style>
   </head>
   <body>
-    <main>
-      <section class="hero" aria-label="Northshore hero">
-        <div class="hero-inner">
-          <h1 class="brand">Northshore</h1>
-          <p class="headline">Clay shaped by tide and time.</p>
-          <p class="lede">
-            Hand-thrown ceramics from a coastal studio—quiet forms for everyday
-            tables.
-          </p>
-          <a class="cta" href="#about">
-            Explore the studio
-            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path
-                d="M3 8h10M9 4l4 4-4 4"
-                stroke="currentColor"
-                stroke-width="1.6"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </a>
-        </div>
-      </section>
-
-      <section class="about" id="about">
-        <div class="about-inner">
-          <h2>Made where the water meets the kiln</h2>
-          <p>
-            Each piece begins with local clay and ends in a glaze that echoes
-            fog, driftwood, and late-afternoon light. Small batches, fired
-            weekly.
-          </p>
-        </div>
-      </section>
-    </main>
-
-    <footer>
-      <p>Northshore Studio · Est. 2019</p>
-    </footer>
-
-    <script>
-      const about = document.querySelector(".about-inner");
-      if (about && "IntersectionObserver" in window) {
-        const observer = new IntersectionObserver(
-          ([entry]) => {
-            if (entry.isIntersecting) {
-              about.classList.add("is-visible");
-              observer.disconnect();
-            }
-          },
-          { threshold: 0.35 }
-        );
-        observer.observe(about);
-      } else if (about) {
-        about.classList.add("is-visible");
-      }
-    </script>
+    <h1>Hello World</h1>
   </body>
 </html>
