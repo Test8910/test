@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Phase 1+2 dashboard: OHLC summary, RSI(14), basic signals.
+ * Phase 3 dashboard UI: price, RSI, trend, signal + CALL/PUT action.
  */
 
 use Trading\Database;
@@ -14,11 +14,21 @@ $config = require dirname(__DIR__) . '/src/bootstrap.php';
 
 try {
     $repo = new PriceRepository(Database::connection($config));
-    $summary = $repo->summaryWithRsi(RsiCalculator::DEFAULT_PERIOD);
+    $assets = $repo->summaryWithRsi(RsiCalculator::DEFAULT_PERIOD);
     $error = null;
 } catch (Throwable $e) {
-    $summary = [];
+    $assets = [];
     $error = $e->getMessage();
+}
+
+function format_price(string $market, float|string $price): string
+{
+    $value = (float) $price;
+    if (strtoupper($market) === 'IN') {
+        return '₹' . number_format($value, 2);
+    }
+
+    return '$' . number_format($value, 2);
 }
 ?>
 <!DOCTYPE html>
@@ -26,124 +36,241 @@ try {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Trading Dashboard — Phase 2</title>
+  <title>Trading Dashboard</title>
   <style>
     :root {
-      --bg: #0f1419;
-      --panel: #1a222c;
-      --text: #e8eef4;
-      --muted: #93a4b5;
-      --accent: #3dd68c;
-      --line: #2a3542;
-      --hot: #ff7b72;
-      --cold: #79c0ff;
-      --mid: #d2a8ff;
+      --bg: #0e151c;
+      --panel: #16212b;
+      --panel-2: #1c2a36;
+      --text: #eaf1f7;
+      --muted: #8fa3b5;
+      --line: #2a3a49;
+      --up: #3dd68c;
+      --down: #ff7b72;
+      --call: #79c0ff;
+      --put: #ff9f6b;
+      --neutral: #d2a8ff;
     }
+
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
-      font-family: "Segoe UI", system-ui, sans-serif;
-      background: radial-gradient(circle at top, #1b2733, var(--bg));
-      color: var(--text);
       min-height: 100vh;
-      padding: 2rem 1.25rem;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1000px 500px at 10% -10%, rgba(61, 214, 140, 0.12), transparent 55%),
+        radial-gradient(900px 480px at 100% 0%, rgba(121, 192, 255, 0.12), transparent 50%),
+        var(--bg);
+      padding: 2rem 1.25rem 3rem;
     }
-    main { max-width: 960px; margin: 0 auto; }
-    h1 { margin: 0 0 0.35rem; font-size: 1.75rem; font-weight: 650; }
-    p { color: var(--muted); margin: 0 0 1.5rem; }
+
+    main { max-width: 1100px; margin: 0 auto; }
+
+    header { margin-bottom: 1.75rem; }
+    h1 {
+      margin: 0 0 0.4rem;
+      font-size: clamp(1.6rem, 3vw, 2.1rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .subtitle { margin: 0; color: var(--muted); line-height: 1.5; }
+
     .error {
       background: #3a1d1d;
       border: 1px solid #7a3030;
       color: #ffb4b4;
       padding: 0.9rem 1rem;
-      border-radius: 8px;
+      border-radius: 10px;
       margin-bottom: 1rem;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
+
+    .empty {
+      color: var(--muted);
+      padding: 1.25rem;
       background: var(--panel);
-      border-radius: 10px;
-      overflow: hidden;
+      border-radius: 12px;
     }
-    th, td {
-      text-align: left;
-      padding: 0.85rem 1rem;
-      border-bottom: 1px solid var(--line);
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+
+    .asset {
+      background: linear-gradient(180deg, var(--panel-2), var(--panel));
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1.15rem 1.2rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      animation: rise 0.45s ease both;
+    }
+
+    .asset:nth-child(2) { animation-delay: 0.05s; }
+    .asset:nth-child(3) { animation-delay: 0.1s; }
+    .asset:nth-child(4) { animation-delay: 0.15s; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .asset-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+
+    .symbol {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .name {
+      margin: 0.2rem 0 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .trend {
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.28rem 0.55rem;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .trend-up { background: rgba(61, 214, 140, 0.14); color: var(--up); }
+    .trend-down { background: rgba(255, 123, 114, 0.14); color: var(--down); }
+    .trend-flat, .trend-na { background: rgba(143, 163, 181, 0.14); color: var(--muted); }
+
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.75rem;
+    }
+
+    .price {
+      font-size: 1.55rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+
+    .change {
+      font-size: 0.9rem;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+    }
+    .change-up { color: var(--up); }
+    .change-down { color: var(--down); }
+    .change-flat { color: var(--muted); }
+
+    .insight {
+      margin: 0;
+      padding: 0.85rem 0.9rem;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.22);
+      border: 1px solid var(--line);
+      line-height: 1.45;
       font-size: 0.95rem;
     }
-    th { color: var(--muted); font-weight: 600; }
-    tr:last-child td { border-bottom: 0; }
-    .close, .rsi { font-variant-numeric: tabular-nums; }
-    .close { color: var(--accent); }
-    .signal {
-      display: inline-block;
-      padding: 0.2rem 0.55rem;
-      border-radius: 999px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
+
+    .insight strong { font-weight: 700; }
+    .action-put { color: var(--put); font-weight: 700; }
+    .action-call { color: var(--call); font-weight: 700; }
+    .action-wait { color: var(--neutral); font-weight: 700; }
+
+    .meta {
+      color: var(--muted);
+      font-size: 0.78rem;
     }
-    .signal-overbought { background: rgba(255, 123, 114, 0.15); color: var(--hot); }
-    .signal-oversold { background: rgba(121, 192, 255, 0.15); color: var(--cold); }
-    .signal-neutral { background: rgba(210, 168, 255, 0.12); color: var(--mid); }
-    .signal-na { background: rgba(147, 164, 181, 0.12); color: var(--muted); }
-    .empty { color: var(--muted); padding: 1.25rem; background: var(--panel); border-radius: 10px; }
+
+    .legend {
+      margin-top: 1.25rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
     code { color: #9fd3ff; }
-    .legend { margin-top: 1rem; font-size: 0.85rem; color: var(--muted); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .asset { animation: none; }
+    }
   </style>
 </head>
 <body>
   <main>
-    <h1>Trading Dashboard</h1>
-    <p>Phase 2 — RSI(<?= (int) RsiCalculator::DEFAULT_PERIOD ?>) from close prices + basic signals.</p>
+    <header>
+      <h1>Trading Dashboard</h1>
+      <p class="subtitle">
+        Phase 3 — price, RSI(<?= (int) RsiCalculator::DEFAULT_PERIOD ?>), trend, and CALL/PUT style signals.
+      </p>
+    </header>
 
     <?php if ($error !== null): ?>
       <div class="error">Database error: <?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
-      <p>Run <code>php bin/setup_db.php</code> then <code>php bin/ingest_prices.php</code>.</p>
-    <?php elseif ($summary === []): ?>
+      <p class="subtitle">Run <code>php bin/setup_db.php</code> then <code>php bin/ingest_prices.php</code>.</p>
+    <?php elseif ($assets === []): ?>
       <div class="empty">No prices yet. Run <code>php bin/ingest_prices.php</code>.</div>
     <?php else: ?>
-      <table>
-        <thead>
-          <tr>
-            <th>Symbol</th>
-            <th>Bars</th>
-            <th>To</th>
-            <th>Last close</th>
-            <th>RSI(14)</th>
-            <th>Signal</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php foreach ($summary as $row): ?>
-            <?php
-              $signal = $row['signal'];
-              $signalClass = match ($signal) {
-                  'overbought' => 'signal-overbought',
-                  'oversold' => 'signal-oversold',
-                  'neutral' => 'signal-neutral',
-                  default => 'signal-na',
-              };
-            ?>
-            <tr>
-              <td><?= htmlspecialchars($row['symbol'], ENT_QUOTES, 'UTF-8') ?></td>
-              <td><?= (int) $row['bars'] ?></td>
-              <td><?= htmlspecialchars($row['last_date'], ENT_QUOTES, 'UTF-8') ?></td>
-              <td class="close"><?= htmlspecialchars((string) $row['last_close'], ENT_QUOTES, 'UTF-8') ?></td>
-              <td class="rsi">
-                <?= $row['rsi'] === null ? 'n/a' : htmlspecialchars(number_format((float) $row['rsi'], 2), ENT_QUOTES, 'UTF-8') ?>
-              </td>
-              <td><span class="signal <?= $signalClass ?>"><?= htmlspecialchars($signal, ENT_QUOTES, 'UTF-8') ?></span></td>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
+      <section class="grid" aria-label="Asset signals">
+        <?php foreach ($assets as $asset): ?>
+          <?php
+            $trendClass = 'trend-' . preg_replace('/[^a-z]/', '', $asset['trend']);
+            $change = $asset['change_pct'];
+            $changeClass = 'change-flat';
+            $changeText = '—';
+            if ($change !== null) {
+                $changeClass = $change > 0 ? 'change-up' : ($change < 0 ? 'change-down' : 'change-flat');
+                $changeText = ($change > 0 ? '+' : '') . number_format($change, 2) . '%';
+            }
+            $actionClass = match ($asset['signal']) {
+                'overbought' => 'action-put',
+                'oversold' => 'action-call',
+                default => 'action-wait',
+            };
+            $rsiText = $asset['rsi'] === null ? 'n/a' : number_format((float) $asset['rsi'], 2);
+          ?>
+          <article class="asset">
+            <div class="asset-top">
+              <div>
+                <h2 class="symbol"><?= htmlspecialchars($asset['symbol'], ENT_QUOTES, 'UTF-8') ?></h2>
+                <p class="name"><?= htmlspecialchars($asset['name'], ENT_QUOTES, 'UTF-8') ?></p>
+              </div>
+              <span class="trend <?= htmlspecialchars($trendClass, ENT_QUOTES, 'UTF-8') ?>">
+                <?= htmlspecialchars($asset['trend_label'], ENT_QUOTES, 'UTF-8') ?>
+              </span>
+            </div>
+
+            <div class="price-row">
+              <div class="price"><?= htmlspecialchars(format_price($asset['market'], $asset['last_close']), ENT_QUOTES, 'UTF-8') ?></div>
+              <div class="change <?= $changeClass ?>"><?= htmlspecialchars($changeText, ENT_QUOTES, 'UTF-8') ?></div>
+            </div>
+
+            <p class="insight">
+              RSI: <strong><?= htmlspecialchars($rsiText, ENT_QUOTES, 'UTF-8') ?></strong>
+              → <?= htmlspecialchars($asset['signal_label'], ENT_QUOTES, 'UTF-8') ?>
+              → <span class="<?= $actionClass ?>"><?= htmlspecialchars($asset['action'], ENT_QUOTES, 'UTF-8') ?></span>
+            </p>
+
+            <div class="meta">As of <?= htmlspecialchars($asset['last_date'], ENT_QUOTES, 'UTF-8') ?></div>
+          </article>
+        <?php endforeach; ?>
+      </section>
+
       <p class="legend">
-        Overbought ≥ <?= (int) RsiCalculator::OVERBOUGHT ?>
-        · Oversold ≤ <?= (int) RsiCalculator::OVERSOLD ?>
-        · otherwise Neutral
+        RSI ≥ <?= (int) RsiCalculator::OVERBOUGHT ?> → Overbought → Consider PUT ·
+        RSI ≤ <?= (int) RsiCalculator::OVERSOLD ?> → Oversold → Consider CALL ·
+        otherwise Wait / Hold
       </p>
     <?php endif; ?>
   </main>

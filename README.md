@@ -2,10 +2,11 @@
 
 ## Trading Dashboard (PHP)
 
-Phase 1 data collection lives in [`trading/`](trading/):
+Code lives in [`trading/`](trading/):
 
-- Fetch daily OHLC for QQQ, S&P 500, Nifty 50, Nifty 100 (Yahoo Finance)
-- Store in MySQL `prices` table
-- Minimal status page under `trading/public/`
+- **Phase 1:** Fetch daily OHLC (QQQ, S&P 500, Nifty 50/100) into MySQL
+- **Phase 2:** RSI(14) from closes + overbought/oversold signals
+- **Phase 3:** Dashboard UI — price, RSI, trend, CALL/PUT actions
+- Status page: `trading/public/`
 
 See [`trading/README.md`](trading/README.md) for setup.

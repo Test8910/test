@@ -56,12 +56,15 @@ foreach ($symbols as $symbolRow) {
         continue;
     }
 
+    $trend = RsiCalculator::trend($closes);
     echo sprintf(
-        "%-9s  bars=%-4d  last_close=%-10s  RSI=%6.2f  %s\n",
+        "%-9s  bars=%-4d  last_close=%-10s  trend=%-4s  RSI=%6.2f  %s → %s\n",
         $symbol,
         count($closes),
         (string) end($closes),
+        $trend,
         $rsi,
-        $signal
+        RsiCalculator::signalLabel($signal),
+        RsiCalculator::action($signal)
     );
 }

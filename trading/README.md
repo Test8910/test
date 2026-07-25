@@ -82,11 +82,23 @@ Core logic lives in `src/RsiCalculator.php`:
 4. Later bars use Wilder smoothing (standard RSI)
 
 Dashboard shows RSI plus basic signals:
-- **overbought** ≥ 70  
-- **oversold** ≤ 30  
-- **neutral** otherwise  
+- **overbought** ≥ 70 → Consider PUT  
+- **oversold** ≤ 30 → Consider CALL  
+- **neutral** otherwise → Wait / Hold  
+
+## Phase 3 — Dashboard UI
+
+`public/index.php` shows one card per asset with:
+- Current price (+ daily %)
+- RSI value
+- Trend (up / down)
+- Signal → CALL/PUT style action
+
+```bash
+cd trading/public
+php -S 127.0.0.1:8081
+```
 
 ## Next phases (planned)
 
-- Phase 3: Calls vs Puts insight
-- Phase 4: fuller dashboard UI (charts, history)
+- Phase 4: charts, RSI history, richer options insight

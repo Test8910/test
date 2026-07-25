@@ -103,6 +103,60 @@ final class RsiCalculator
         return 'neutral';
     }
 
+    /** Human label with status marker, e.g. "🔴 Overbought". */
+    public static function signalLabel(string $signal): string
+    {
+        return match ($signal) {
+            'overbought' => '🔴 Overbought',
+            'oversold' => '🟢 Oversold',
+            'neutral' => '⚪ Neutral',
+            default => 'n/a',
+        };
+    }
+
+    /** Options-style action from RSI signal. */
+    public static function action(string $signal): string
+    {
+        return match ($signal) {
+            'overbought' => 'Consider PUT',
+            'oversold' => 'Consider CALL',
+            'neutral' => 'Wait / Hold',
+            default => 'n/a',
+        };
+    }
+
+    /**
+     * Short-term trend from recent closes (last vs prior bar).
+     *
+     * @param list<float|int|string> $prices
+     * @return 'up'|'down'|'flat'|'n/a'
+     */
+    public static function trend(array $prices): string
+    {
+        $closes = array_values(array_map('floatval', $prices));
+        $n = count($closes);
+        if ($n < 2) {
+            return 'n/a';
+        }
+
+        $delta = $closes[$n - 1] - $closes[$n - 2];
+        if (abs($delta) < 0.0001) {
+            return 'flat';
+        }
+
+        return $delta > 0 ? 'up' : 'down';
+    }
+
+    public static function trendLabel(string $trend): string
+    {
+        return match ($trend) {
+            'up' => '▲ Up',
+            'down' => '▼ Down',
+            'flat' => '▶ Flat',
+            default => 'n/a',
+        };
+    }
+
     private static function rsiFromAverages(float $avgGain, float $avgLoss): float
     {
         if ($avgLoss == 0.0) {

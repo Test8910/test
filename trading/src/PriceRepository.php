@@ -102,51 +102,97 @@ final class PriceRepository
     }
 
     /**
-     * @return list<array{symbol: string, bars: int, first_date: string, last_date: string, last_close: string}>
+     * @return list<array{
+     *   symbol: string,
+     *   name: ?string,
+     *   market: ?string,
+     *   bars: int,
+     *   first_date: string,
+     *   last_date: string,
+     *   last_close: string,
+     *   prev_close: ?string
+     * }>
      */
     public function summary(): array
     {
         $sql = 'SELECT
-                  symbol,
+                  p.symbol,
+                  s.name,
+                  s.market,
                   COUNT(*) AS bars,
-                  MIN(date) AS first_date,
-                  MAX(date) AS last_date,
+                  MIN(p.date) AS first_date,
+                  MAX(p.date) AS last_date,
                   (
                     SELECT p2.close
                     FROM prices p2
                     WHERE p2.symbol = p.symbol
                     ORDER BY p2.date DESC
                     LIMIT 1
-                  ) AS last_close
+                  ) AS last_close,
+                  (
+                    SELECT p3.close
+                    FROM prices p3
+                    WHERE p3.symbol = p.symbol
+                    ORDER BY p3.date DESC
+                    LIMIT 1 OFFSET 1
+                  ) AS prev_close
                 FROM prices p
-                GROUP BY symbol
-                ORDER BY symbol';
+                LEFT JOIN symbols s ON s.symbol = p.symbol
+                GROUP BY p.symbol, s.name, s.market
+                ORDER BY p.symbol';
 
         return $this->pdo->query($sql)->fetchAll();
     }
 
     /**
-     * Summary rows enriched with latest RSI(14) and signal.
+     * Dashboard rows: price, RSI, trend, signal, options action.
      *
      * @return list<array{
      *   symbol: string,
+     *   name: string,
+     *   market: string,
      *   bars: int,
      *   first_date: string,
      *   last_date: string,
      *   last_close: string,
+     *   prev_close: ?string,
+     *   change_pct: ?float,
      *   rsi: ?float,
-     *   signal: string
+     *   signal: string,
+     *   signal_label: string,
+     *   action: string,
+     *   trend: string,
+     *   trend_label: string
      * }>
      */
     public function summaryWithRsi(int $period = RsiCalculator::DEFAULT_PERIOD): array
     {
         $rows = [];
         foreach ($this->summary() as $row) {
-            $rsi = RsiCalculator::calculateRSI($this->closes($row['symbol']), $period);
+            $closes = $this->closes($row['symbol']);
+            $rsi = RsiCalculator::calculateRSI($closes, $period);
+            $signal = RsiCalculator::signal($rsi);
+            $trend = RsiCalculator::trend($closes);
+
+            $changePct = null;
+            if ($row['prev_close'] !== null && (float) $row['prev_close'] != 0.0) {
+                $changePct = round(
+                    (((float) $row['last_close'] - (float) $row['prev_close']) / (float) $row['prev_close']) * 100,
+                    2
+                );
+            }
+
             $rows[] = [
                 ...$row,
+                'name' => $row['name'] ?? $row['symbol'],
+                'market' => $row['market'] ?? '',
+                'change_pct' => $changePct,
                 'rsi' => $rsi,
-                'signal' => RsiCalculator::signal($rsi),
+                'signal' => $signal,
+                'signal_label' => RsiCalculator::signalLabel($signal),
+                'action' => RsiCalculator::action($signal),
+                'trend' => $trend,
+                'trend_label' => RsiCalculator::trendLabel($trend),
             ];
         }
 
