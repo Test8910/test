@@ -1,0 +1,2 @@
+# Keep local secrets out of git if you customize credentials
+# config/config.php
