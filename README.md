@@ -11,6 +11,7 @@ Code lives in [`trading/`](trading/):
 - **Phase 5:** Multi-market — US, India, UK, Asia
 - **Phase 6:** Cron sync — `update_prices.php` every 5 minutes
 - **Phase 7:** Smart Signal Engine — RSI + move + trend → PUT/CALL/HOLD
+- **Phase 8:** Future upgrades — options chain, IV, Greeks, backtesting (roadmap)
 - Status page: `trading/public/`
 
-See [`trading/README.md`](trading/README.md) for setup.
+See [`trading/README.md`](trading/README.md) and [`trading/PHASE8_ROADMAP.md`](trading/PHASE8_ROADMAP.md).

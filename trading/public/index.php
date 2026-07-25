@@ -306,6 +306,35 @@ foreach ($assets as $asset) {
       line-height: 1.5;
     }
 
+    .roadmap {
+      margin-top: 2rem;
+      padding: 1.15rem 1.2rem;
+      border-radius: 14px;
+      border: 1px dashed var(--line);
+      background: rgba(0, 0, 0, 0.16);
+    }
+
+    .roadmap h2 {
+      margin: 0 0 0.45rem;
+      font-size: 1.05rem;
+    }
+
+    .roadmap p {
+      margin: 0 0 0.75rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .roadmap ul {
+      margin: 0;
+      padding-left: 1.15rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+
+    .roadmap li strong { color: var(--text); }
+
     code { color: #9fd3ff; }
 
     @media (prefers-reduced-motion: reduce) {
@@ -318,7 +347,7 @@ foreach ($assets as $asset) {
     <header>
       <h1>Trading Dashboard</h1>
       <p class="subtitle">
-        Phase 7 — Smart Signal Engine (RSI + price movement + market trend).
+        Phases 1–7 live · Phase 8 roadmap for options chain, IV, Greeks, backtesting.
       </p>
       <?php if ($lastSync !== null): ?>
         <?php
@@ -458,6 +487,18 @@ foreach ($assets as $asset) {
         Smart Signal: RSI &gt; 70 → PUT · RSI &lt; 30 → CALL · else HOLD,
         then adjusted by price movement + short-term market trend.
       </p>
+
+      <section class="roadmap" aria-label="Phase 8 future upgrades">
+        <h2>Phase 8 — Future upgrades</h2>
+        <p>Not built yet. Planned next after the price-only engine is solid:</p>
+        <ul>
+          <li><strong>Real options chain data</strong> — live strikes, expiries, bid/ask</li>
+          <li><strong>Implied volatility</strong> — expensive vs cheap premium context</li>
+          <li><strong>Greeks</strong> — Delta, Theta (and later Gamma/Vega)</li>
+          <li><strong>Backtesting</strong> — replay smart signals on history</li>
+        </ul>
+        <p style="margin-top:0.75rem;margin-bottom:0;">Details: <code>trading/PHASE8_ROADMAP.md</code></p>
+      </section>
     <?php endif; ?>
   </main>
 </body>

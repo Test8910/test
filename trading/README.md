@@ -182,7 +182,17 @@ mysql -u root -p < database/migrate_phase7_smart_signals.sql
 php update_prices.php   # also persists smart_signals
 ```
 
-## Next (optional)
+## Phase 8 — Future upgrade ideas
 
-- Charts / RSI history
-- Real option-chain integration later
+Documented (not implemented yet) in [`PHASE8_ROADMAP.md`](PHASE8_ROADMAP.md):
+
+- Real options chain data  
+- Implied volatility  
+- Greeks (Delta, Theta)  
+- Backtesting  
+
+Stub classes live under `src/Future/`. Check status:
+
+```bash
+php bin/phase8_status.php
+```
