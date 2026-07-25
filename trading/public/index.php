@@ -253,6 +253,47 @@ foreach ($assets as $asset) {
       line-height: 1.4;
     }
 
+    .smart {
+      padding: 0.85rem 0.9rem;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(121, 192, 255, 0.08);
+    }
+
+    .smart-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.45rem;
+    }
+
+    .smart-badge {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      padding: 0.28rem 0.65rem;
+      border-radius: 8px;
+    }
+    .smart-PUT { background: rgba(255, 159, 107, 0.2); color: var(--put); }
+    .smart-CALL { background: rgba(121, 192, 255, 0.2); color: var(--call); }
+    .smart-HOLD { background: rgba(210, 168, 255, 0.16); color: var(--neutral); }
+
+    .smart-conf {
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .smart-reasons {
+      margin: 0;
+      padding-left: 1.1rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.45;
+    }
+
     .meta {
       color: var(--muted);
       font-size: 0.78rem;
@@ -277,7 +318,7 @@ foreach ($assets as $asset) {
     <header>
       <h1>Trading Dashboard</h1>
       <p class="subtitle">
-        Phase 6 — multi-market dashboard with scheduled price + RSI sync.
+        Phase 7 — Smart Signal Engine (RSI + price movement + market trend).
       </p>
       <?php if ($lastSync !== null): ?>
         <?php
@@ -341,6 +382,8 @@ foreach ($assets as $asset) {
                 $opt = $asset['options'];
                 $callStrengthClass = 'bias-' . strtolower($opt['call']['strength']);
                 $putStrengthClass = 'bias-' . strtolower($opt['put']['strength']);
+                $smart = $asset['smart'];
+                $smartClass = 'smart-' . preg_replace('/[^A-Z]/', '', $smart['signal']);
               ?>
               <article class="asset">
                 <div class="asset-top">
@@ -356,6 +399,20 @@ foreach ($assets as $asset) {
                 <div class="price-row">
                   <div class="price"><?= htmlspecialchars(Markets::formatPrice($asset['market'], $asset['last_close']), ENT_QUOTES, 'UTF-8') ?></div>
                   <div class="change <?= $changeClass ?>"><?= htmlspecialchars($changeText, ENT_QUOTES, 'UTF-8') ?></div>
+                </div>
+
+                <div class="smart">
+                  <div class="smart-top">
+                    <span class="smart-badge <?= htmlspecialchars($smartClass, ENT_QUOTES, 'UTF-8') ?>">
+                      <?= htmlspecialchars($smart['signal'], ENT_QUOTES, 'UTF-8') ?>
+                    </span>
+                    <span class="smart-conf"><?= htmlspecialchars($smart['confidence'], ENT_QUOTES, 'UTF-8') ?> confidence</span>
+                  </div>
+                  <ul class="smart-reasons">
+                    <?php foreach (array_slice($smart['reasons'], 0, 3) as $reason): ?>
+                      <li><?= htmlspecialchars($reason, ENT_QUOTES, 'UTF-8') ?></li>
+                    <?php endforeach; ?>
+                  </ul>
                 </div>
 
                 <p class="insight">
@@ -398,7 +455,8 @@ foreach ($assets as $asset) {
       <?php endforeach; ?>
 
       <p class="legend">
-        Markets: US (QQQ, SPY) · India (Nifty 50/100) · UK (FTSE 100) · Asia (Nikkei 225)
+        Smart Signal: RSI &gt; 70 → PUT · RSI &lt; 30 → CALL · else HOLD,
+        then adjusted by price movement + short-term market trend.
       </p>
     <?php endif; ?>
   </main>

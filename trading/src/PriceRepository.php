@@ -184,6 +184,7 @@ final class PriceRepository
             }
 
             $options = OptionsLogic::analyze((float) $row['last_close'], $rsi, $closes);
+            $smart = SmartSignalEngine::evaluate($closes, $rsi, $period);
 
             $rows[] = [
                 ...$row,
@@ -197,6 +198,7 @@ final class PriceRepository
                 'trend' => $trend,
                 'trend_label' => RsiCalculator::trendLabel($trend),
                 'options' => $options,
+                'smart' => $smart,
             ];
         }
 
@@ -236,6 +238,48 @@ final class PriceRepository
             ':as_of_date' => $asOfDate,
             ':rsi' => $rsi,
             ':rsi_signal' => $signal,
+        ]);
+    }
+
+    /**
+     * @param array{
+     *   signal: string,
+     *   confidence: string,
+     *   score: float,
+     *   rsi: ?float,
+     *   trend: string,
+     *   change_pct: ?float,
+     *   reasons: list<string>
+     * } $smart
+     */
+    public function upsertSmartSignal(string $symbol, string $asOfDate, array $smart): void
+    {
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO smart_signals
+               (symbol, smart_signal, confidence, score, rsi, trend, change_pct, reasons, as_of_date, calculated_at)
+             VALUES
+               (:symbol, :smart_signal, :confidence, :score, :rsi, :trend, :change_pct, :reasons, :as_of_date, NOW())
+             ON DUPLICATE KEY UPDATE
+               smart_signal = VALUES(smart_signal),
+               confidence = VALUES(confidence),
+               score = VALUES(score),
+               rsi = VALUES(rsi),
+               trend = VALUES(trend),
+               change_pct = VALUES(change_pct),
+               reasons = VALUES(reasons),
+               as_of_date = VALUES(as_of_date),
+               calculated_at = VALUES(calculated_at)'
+        );
+        $stmt->execute([
+            ':symbol' => $symbol,
+            ':smart_signal' => $smart['signal'],
+            ':confidence' => $smart['confidence'],
+            ':score' => $smart['score'],
+            ':rsi' => $smart['rsi'],
+            ':trend' => $smart['trend'],
+            ':change_pct' => $smart['change_pct'],
+            ':reasons' => implode(' | ', $smart['reasons']),
+            ':as_of_date' => $asOfDate,
         ]);
     }
 

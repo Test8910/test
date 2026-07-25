@@ -49,10 +49,14 @@ final class PriceSync
                 $closes = $this->repo->closes($symbol);
                 $rsi = RsiCalculator::calculateRSI($closes, $rsiPeriod);
                 $signal = RsiCalculator::signal($rsi);
+                $smart = SmartSignalEngine::evaluate($closes, $rsi, $rsiPeriod);
 
-                if ($rsi !== null && $closes !== []) {
+                if ($closes !== []) {
                     $asOf = $this->repo->latestDate($symbol) ?? gmdate('Y-m-d');
-                    $this->repo->upsertRsiSnapshot($symbol, $rsiPeriod, $asOf, $rsi, $signal);
+                    if ($rsi !== null) {
+                        $this->repo->upsertRsiSnapshot($symbol, $rsiPeriod, $asOf, $rsi, $signal);
+                    }
+                    $this->repo->upsertSmartSignal($symbol, $asOf, $smart);
                 }
 
                 $ok++;
@@ -62,6 +66,8 @@ final class PriceSync
                     'bars' => $bars,
                     'rsi' => $rsi,
                     'signal' => $signal,
+                    'smart_signal' => $smart['signal'],
+                    'confidence' => $smart['confidence'],
                 ];
             } catch (Throwable $e) {
                 $failed++;

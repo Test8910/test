@@ -161,6 +161,27 @@ Sample crontab file: `cron/trading-dashboard`
 
 The dashboard header shows the last sync status.
 
+## Phase 7 — Smart Signal Engine
+
+Combines RSI + price movement + market trend into **PUT / CALL / HOLD**:
+
+```php
+if ($rsi > 70) {
+    $signal = "PUT";
+} elseif ($rsi < 30) {
+    $signal = "CALL";
+} else {
+    $signal = "HOLD";
+}
+// then adjust with recent % move + short-term trend
+```
+
+```bash
+php bin/smart_signals.php
+mysql -u root -p < database/migrate_phase7_smart_signals.sql
+php update_prices.php   # also persists smart_signals
+```
+
 ## Next (optional)
 
 - Charts / RSI history

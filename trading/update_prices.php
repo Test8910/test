@@ -14,6 +14,7 @@ declare(strict_types=1);
  *   1) Fetch latest OHLC prices
  *   2) Store / upsert into MySQL
  *   3) Recalculate RSI snapshots
+ *   4) Run Smart Signal Engine (RSI + move + trend)
  */
 
 use Trading\Database;
@@ -49,11 +50,12 @@ foreach ($result['results'] as $row) {
     if ($row['ok']) {
         $rsi = $row['rsi'] === null ? 'n/a' : number_format((float) $row['rsi'], 2);
         echo sprintf(
-            "  OK   %-10s bars=%-4d RSI=%s (%s)\n",
+            "  OK   %-10s bars=%-4d RSI=%s  smart=%s (%s)\n",
             $row['symbol'],
             (int) $row['bars'],
             $rsi,
-            $row['signal'] ?? 'n/a'
+            $row['smart_signal'] ?? 'n/a',
+            $row['confidence'] ?? 'n/a'
         );
     } else {
         echo sprintf("  FAIL %-10s %s\n", $row['symbol'], $row['error'] ?? 'unknown error');
