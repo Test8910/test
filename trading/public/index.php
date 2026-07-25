@@ -3,10 +3,11 @@
 declare(strict_types=1);
 
 /**
- * Phase 4 dashboard UI: price, RSI, trend, signal + simple options bias.
+ * Multi-market dashboard: US / India / UK / Asia.
  */
 
 use Trading\Database;
+use Trading\Markets;
 use Trading\PriceRepository;
 use Trading\RsiCalculator;
 
@@ -21,14 +22,10 @@ try {
     $error = $e->getMessage();
 }
 
-function format_price(string $market, float|string $price): string
-{
-    $value = (float) $price;
-    if (strtoupper($market) === 'IN') {
-        return '₹' . number_format($value, 2);
-    }
-
-    return '$' . number_format($value, 2);
+$grouped = [];
+foreach ($assets as $asset) {
+    $market = $asset['market'] !== '' ? $asset['market'] : 'OTHER';
+    $grouped[$market][] = $asset;
 }
 ?>
 <!DOCTYPE html>
@@ -93,6 +90,25 @@ function format_price(string $market, float|string $price): string
       border-radius: 12px;
     }
 
+    .market {
+      margin-bottom: 1.75rem;
+    }
+
+    .market-title {
+      display: flex;
+      align-items: baseline;
+      gap: 0.55rem;
+      margin: 0 0 0.85rem;
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .market-title span {
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -109,10 +125,6 @@ function format_price(string $market, float|string $price): string
       gap: 0.85rem;
       animation: rise 0.45s ease both;
     }
-
-    .asset:nth-child(2) { animation-delay: 0.05s; }
-    .asset:nth-child(3) { animation-delay: 0.1s; }
-    .asset:nth-child(4) { animation-delay: 0.15s; }
 
     @keyframes rise {
       from { opacity: 0; transform: translateY(10px); }
@@ -228,7 +240,7 @@ function format_price(string $market, float|string $price): string
     }
 
     .legend {
-      margin-top: 1.25rem;
+      margin-top: 0.5rem;
       color: var(--muted);
       font-size: 0.85rem;
       line-height: 1.5;
@@ -246,7 +258,7 @@ function format_price(string $market, float|string $price): string
     <header>
       <h1>Trading Dashboard</h1>
       <p class="subtitle">
-        Phase 4 — RSI bias + simple strike CALL/PUT strength (no real options pricing).
+        Phase 5 — multi-market tracking across US, India, UK, and Asia.
       </p>
     </header>
 
@@ -256,84 +268,92 @@ function format_price(string $market, float|string $price): string
     <?php elseif ($assets === []): ?>
       <div class="empty">No prices yet. Run <code>php bin/ingest_prices.php</code>.</div>
     <?php else: ?>
-      <section class="grid" aria-label="Asset signals">
-        <?php foreach ($assets as $asset): ?>
-          <?php
-            $trendClass = 'trend-' . preg_replace('/[^a-z]/', '', $asset['trend']);
-            $change = $asset['change_pct'];
-            $changeClass = 'change-flat';
-            $changeText = '—';
-            if ($change !== null) {
-                $changeClass = $change > 0 ? 'change-up' : ($change < 0 ? 'change-down' : 'change-flat');
-                $changeText = ($change > 0 ? '+' : '') . number_format($change, 2) . '%';
-            }
-            $actionClass = match ($asset['signal']) {
-                'overbought' => 'action-put',
-                'oversold' => 'action-call',
-                default => 'action-wait',
-            };
-            $rsiText = $asset['rsi'] === null ? 'n/a' : number_format((float) $asset['rsi'], 2);
-            $opt = $asset['options'];
-            $callStrengthClass = 'bias-' . strtolower($opt['call']['strength']);
-            $putStrengthClass = 'bias-' . strtolower($opt['put']['strength']);
-          ?>
-          <article class="asset">
-            <div class="asset-top">
-              <div>
-                <h2 class="symbol"><?= htmlspecialchars($asset['symbol'], ENT_QUOTES, 'UTF-8') ?></h2>
-                <p class="name"><?= htmlspecialchars($asset['name'], ENT_QUOTES, 'UTF-8') ?></p>
-              </div>
-              <span class="trend <?= htmlspecialchars($trendClass, ENT_QUOTES, 'UTF-8') ?>">
-                <?= htmlspecialchars($asset['trend_label'], ENT_QUOTES, 'UTF-8') ?>
-              </span>
-            </div>
+      <?php foreach (Markets::order() as $marketCode): ?>
+        <?php if (empty($grouped[$marketCode])) { continue; } ?>
+        <section class="market" aria-label="<?= htmlspecialchars(Markets::label($marketCode), ENT_QUOTES, 'UTF-8') ?>">
+          <h2 class="market-title">
+            <?= Markets::flag($marketCode) ?>
+            <?= htmlspecialchars(Markets::label($marketCode), ENT_QUOTES, 'UTF-8') ?>
+            <span><?= count($grouped[$marketCode]) ?> assets</span>
+          </h2>
+          <div class="grid">
+            <?php foreach ($grouped[$marketCode] as $asset): ?>
+              <?php
+                $trendClass = 'trend-' . preg_replace('/[^a-z]/', '', $asset['trend']);
+                $change = $asset['change_pct'];
+                $changeClass = 'change-flat';
+                $changeText = '—';
+                if ($change !== null) {
+                    $changeClass = $change > 0 ? 'change-up' : ($change < 0 ? 'change-down' : 'change-flat');
+                    $changeText = ($change > 0 ? '+' : '') . number_format($change, 2) . '%';
+                }
+                $actionClass = match ($asset['signal']) {
+                    'overbought' => 'action-put',
+                    'oversold' => 'action-call',
+                    default => 'action-wait',
+                };
+                $rsiText = $asset['rsi'] === null ? 'n/a' : number_format((float) $asset['rsi'], 2);
+                $opt = $asset['options'];
+                $callStrengthClass = 'bias-' . strtolower($opt['call']['strength']);
+                $putStrengthClass = 'bias-' . strtolower($opt['put']['strength']);
+              ?>
+              <article class="asset">
+                <div class="asset-top">
+                  <div>
+                    <h3 class="symbol"><?= htmlspecialchars($asset['symbol'], ENT_QUOTES, 'UTF-8') ?></h3>
+                    <p class="name"><?= htmlspecialchars($asset['name'], ENT_QUOTES, 'UTF-8') ?></p>
+                  </div>
+                  <span class="trend <?= htmlspecialchars($trendClass, ENT_QUOTES, 'UTF-8') ?>">
+                    <?= htmlspecialchars($asset['trend_label'], ENT_QUOTES, 'UTF-8') ?>
+                  </span>
+                </div>
 
-            <div class="price-row">
-              <div class="price"><?= htmlspecialchars(format_price($asset['market'], $asset['last_close']), ENT_QUOTES, 'UTF-8') ?></div>
-              <div class="change <?= $changeClass ?>"><?= htmlspecialchars($changeText, ENT_QUOTES, 'UTF-8') ?></div>
-            </div>
+                <div class="price-row">
+                  <div class="price"><?= htmlspecialchars(Markets::formatPrice($asset['market'], $asset['last_close']), ENT_QUOTES, 'UTF-8') ?></div>
+                  <div class="change <?= $changeClass ?>"><?= htmlspecialchars($changeText, ENT_QUOTES, 'UTF-8') ?></div>
+                </div>
 
-            <p class="insight">
-              RSI: <strong><?= htmlspecialchars($rsiText, ENT_QUOTES, 'UTF-8') ?></strong>
-              → <?= htmlspecialchars($asset['signal_label'], ENT_QUOTES, 'UTF-8') ?>
-              → <span class="<?= $actionClass ?>"><?= htmlspecialchars($asset['action'], ENT_QUOTES, 'UTF-8') ?></span>
-            </p>
+                <p class="insight">
+                  RSI: <strong><?= htmlspecialchars($rsiText, ENT_QUOTES, 'UTF-8') ?></strong>
+                  → <?= htmlspecialchars($asset['signal_label'], ENT_QUOTES, 'UTF-8') ?>
+                  → <span class="<?= $actionClass ?>"><?= htmlspecialchars($asset['action'], ENT_QUOTES, 'UTF-8') ?></span>
+                </p>
 
-            <div class="options">
-              <div class="strike">
-                Strike: <?= htmlspecialchars(format_price($asset['market'], $opt['strike']), ENT_QUOTES, 'UTF-8') ?>
-              </div>
-              <div class="bias-row">
-                <span>Call Bias:</span>
-                <strong class="<?= htmlspecialchars($callStrengthClass, ENT_QUOTES, 'UTF-8') ?>">
-                  <?= htmlspecialchars($opt['call']['strength'], ENT_QUOTES, 'UTF-8') ?>
-                  (<?= htmlspecialchars($opt['call']['note'], ENT_QUOTES, 'UTF-8') ?>)
-                </strong>
-              </div>
-              <div class="bias-row">
-                <span>Put Bias:</span>
-                <strong class="<?= htmlspecialchars($putStrengthClass, ENT_QUOTES, 'UTF-8') ?>">
-                  <?= htmlspecialchars($opt['put']['strength'], ENT_QUOTES, 'UTF-8') ?>
-                  (<?= htmlspecialchars($opt['put']['note'], ENT_QUOTES, 'UTF-8') ?>)
-                </strong>
-              </div>
-              <p class="hint">
-                Call = price ABOVE strike · Put = price BELOW strike
-                <?php if ($opt['rsi_bias'] !== 'NONE'): ?>
-                  · RSI tilt: <?= htmlspecialchars($opt['rsi_bias'], ENT_QUOTES, 'UTF-8') ?>
-                <?php endif; ?>
-              </p>
-            </div>
+                <div class="options">
+                  <div class="strike">
+                    Strike: <?= htmlspecialchars(Markets::formatPrice($asset['market'], $opt['strike']), ENT_QUOTES, 'UTF-8') ?>
+                  </div>
+                  <div class="bias-row">
+                    <span>Call Bias:</span>
+                    <strong class="<?= htmlspecialchars($callStrengthClass, ENT_QUOTES, 'UTF-8') ?>">
+                      <?= htmlspecialchars($opt['call']['strength'], ENT_QUOTES, 'UTF-8') ?>
+                      (<?= htmlspecialchars($opt['call']['note'], ENT_QUOTES, 'UTF-8') ?>)
+                    </strong>
+                  </div>
+                  <div class="bias-row">
+                    <span>Put Bias:</span>
+                    <strong class="<?= htmlspecialchars($putStrengthClass, ENT_QUOTES, 'UTF-8') ?>">
+                      <?= htmlspecialchars($opt['put']['strength'], ENT_QUOTES, 'UTF-8') ?>
+                      (<?= htmlspecialchars($opt['put']['note'], ENT_QUOTES, 'UTF-8') ?>)
+                    </strong>
+                  </div>
+                  <p class="hint">
+                    Call = price ABOVE strike · Put = price BELOW strike
+                    <?php if ($opt['rsi_bias'] !== 'NONE'): ?>
+                      · RSI tilt: <?= htmlspecialchars($opt['rsi_bias'], ENT_QUOTES, 'UTF-8') ?>
+                    <?php endif; ?>
+                  </p>
+                </div>
 
-            <div class="meta">As of <?= htmlspecialchars($asset['last_date'], ENT_QUOTES, 'UTF-8') ?></div>
-          </article>
-        <?php endforeach; ?>
-      </section>
+                <div class="meta">As of <?= htmlspecialchars($asset['last_date'], ENT_QUOTES, 'UTF-8') ?></div>
+              </article>
+            <?php endforeach; ?>
+          </div>
+        </section>
+      <?php endforeach; ?>
 
       <p class="legend">
-        RSI &gt; <?= (int) RsiCalculator::OVERBOUGHT ?> → PUT bias ·
-        RSI &lt; <?= (int) RsiCalculator::OVERSOLD ?> → CALL bias ·
-        Strength from distance to strike vs recent realistic move (no option pricing).
+        Markets: US (QQQ, SPY) · India (Nifty 50/100) · UK (FTSE 100) · Asia (Nikkei 225)
       </p>
     <?php endif; ?>
   </main>

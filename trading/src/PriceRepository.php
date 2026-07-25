@@ -18,10 +18,10 @@ final class PriceRepository
     public function activeSymbols(): array
     {
         $stmt = $this->pdo->query(
-            'SELECT symbol, name, yahoo_symbol, market
+            'SELECT symbol, name, yahoo_symbol, market, sort_order
              FROM symbols
              WHERE is_active = 1
-             ORDER BY symbol'
+             ORDER BY FIELD(market, \'US\', \'IN\', \'UK\', \'ASIA\'), sort_order, symbol'
         );
 
         return $stmt->fetchAll();
@@ -119,6 +119,7 @@ final class PriceRepository
                   p.symbol,
                   s.name,
                   s.market,
+                  s.sort_order,
                   COUNT(*) AS bars,
                   MIN(p.date) AS first_date,
                   MAX(p.date) AS last_date,
@@ -137,9 +138,9 @@ final class PriceRepository
                     LIMIT 1 OFFSET 1
                   ) AS prev_close
                 FROM prices p
-                LEFT JOIN symbols s ON s.symbol = p.symbol
-                GROUP BY p.symbol, s.name, s.market
-                ORDER BY p.symbol';
+                INNER JOIN symbols s ON s.symbol = p.symbol AND s.is_active = 1
+                GROUP BY p.symbol, s.name, s.market, s.sort_order
+                ORDER BY FIELD(s.market, \'US\', \'IN\', \'UK\', \'ASIA\'), s.sort_order, p.symbol';
 
         return $this->pdo->query($sql)->fetchAll();
     }

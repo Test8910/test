@@ -2,12 +2,14 @@
 
 PHP + MySQL pipeline that pulls daily OHLC prices for:
 
-| Symbol   | Index / ETF              | Yahoo symbol |
-|----------|--------------------------|--------------|
-| QQQ      | Nasdaq-100 (via QQQ)     | `QQQ`        |
-| SPX      | S&P 500                  | `^GSPC`      |
-| NIFTY50  | Nifty 50                 | `^NSEI`      |
-| NIFTY100 | Nifty 100                | `^CNX100`    |
+| Region | Symbol    | Index / ETF        | Yahoo symbol |
+|--------|-----------|--------------------|--------------|
+| 🇺🇸 US | QQQ       | NASDAQ 100         | `QQQ`        |
+| 🇺🇸 US | SPY       | S&P 500            | `SPY`        |
+| 🇮🇳 India | NIFTY50 | Nifty 50           | `^NSEI`      |
+| 🇮🇳 India | NIFTY100| Nifty 100          | `^CNX100`    |
+| 🇬🇧 UK | FTSE100   | FTSE 100           | `^FTSE`      |
+| 🌏 Asia | NIKKEI225 | Nikkei 225       | `^N225`      |
 
 Data source: Yahoo Finance chart API (unofficial, free).
 
@@ -121,6 +123,16 @@ Strike = 792
 Call Bias: Weak (far OTM)
 Put Bias:  Strong (closer to realistic move)
 ```
+
+## Phase 5 — Multi-market tracking
+
+```bash
+# existing DB: refresh symbol universe
+mysql -u root -p < database/migrate_phase5_symbols.sql
+php bin/ingest_prices.php
+```
+
+Dashboard groups assets by region (US / India / UK / Asia).
 
 ## Next (optional)
 

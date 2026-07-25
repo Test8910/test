@@ -1,4 +1,4 @@
--- Phase 1: historical OHLC price storage
+-- Historical OHLC price storage + multi-market symbols
 CREATE DATABASE IF NOT EXISTS trading_dashboard
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
@@ -25,17 +25,26 @@ CREATE TABLE IF NOT EXISTS symbols (
   name VARCHAR(100) NOT NULL,
   yahoo_symbol VARCHAR(30) NOT NULL,
   market VARCHAR(20) NOT NULL,
+  sort_order INT NOT NULL DEFAULT 100,
   is_active TINYINT(1) NOT NULL DEFAULT 1,
-  PRIMARY KEY (symbol)
+  PRIMARY KEY (symbol),
+  KEY idx_symbols_market (market, sort_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO symbols (symbol, name, yahoo_symbol, market) VALUES
-  ('QQQ', 'Invesco QQQ (Nasdaq-100)', 'QQQ', 'US'),
-  ('SPX', 'S&P 500', '^GSPC', 'US'),
-  ('NIFTY50', 'Nifty 50', '^NSEI', 'IN'),
-  ('NIFTY100', 'Nifty 100', '^CNX100', 'IN')
+-- Phase 5 multi-market universe
+INSERT INTO symbols (symbol, name, yahoo_symbol, market, sort_order, is_active) VALUES
+  ('QQQ', 'QQQ — NASDAQ 100', 'QQQ', 'US', 10, 1),
+  ('SPY', 'SPY — S&P 500', 'SPY', 'US', 20, 1),
+  ('NIFTY50', 'Nifty 50', '^NSEI', 'IN', 10, 1),
+  ('NIFTY100', 'Nifty 100', '^CNX100', 'IN', 20, 1),
+  ('FTSE100', 'FTSE 100', '^FTSE', 'UK', 10, 1),
+  ('NIKKEI225', 'Nikkei 225', '^N225', 'ASIA', 10, 1)
 ON DUPLICATE KEY UPDATE
   name = VALUES(name),
   yahoo_symbol = VALUES(yahoo_symbol),
   market = VALUES(market),
-  is_active = 1;
+  sort_order = VALUES(sort_order),
+  is_active = VALUES(is_active);
+
+-- Retire older S&P index ticker in favor of SPY ETF
+UPDATE symbols SET is_active = 0, name = 'S&P 500 (legacy index)' WHERE symbol = 'SPX';
