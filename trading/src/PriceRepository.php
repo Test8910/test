@@ -182,6 +182,8 @@ final class PriceRepository
                 );
             }
 
+            $options = OptionsLogic::analyze((float) $row['last_close'], $rsi, $closes);
+
             $rows[] = [
                 ...$row,
                 'name' => $row['name'] ?? $row['symbol'],
@@ -193,6 +195,7 @@ final class PriceRepository
                 'action' => RsiCalculator::action($signal),
                 'trend' => $trend,
                 'trend_label' => RsiCalculator::trendLabel($trend),
+                'options' => $options,
             ];
         }
 

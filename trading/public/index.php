@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Phase 3 dashboard UI: price, RSI, trend, signal + CALL/PUT action.
+ * Phase 4 dashboard UI: price, RSI, trend, signal + simple options bias.
  */
 
 use Trading\Database;
@@ -188,6 +188,40 @@ function format_price(string $market, float|string $price): string
     .action-call { color: var(--call); font-weight: 700; }
     .action-wait { color: var(--neutral); font-weight: 700; }
 
+    .options {
+      display: grid;
+      gap: 0.45rem;
+      padding: 0.85rem 0.9rem;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.18);
+      border: 1px solid var(--line);
+      font-size: 0.9rem;
+    }
+
+    .options .strike {
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .bias-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      color: var(--muted);
+    }
+
+    .bias-row strong { color: var(--text); font-weight: 700; }
+    .bias-strong { color: var(--up); }
+    .bias-moderate { color: var(--neutral); }
+    .bias-weak { color: var(--down); }
+
+    .hint {
+      margin: 0.15rem 0 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+
     .meta {
       color: var(--muted);
       font-size: 0.78rem;
@@ -212,7 +246,7 @@ function format_price(string $market, float|string $price): string
     <header>
       <h1>Trading Dashboard</h1>
       <p class="subtitle">
-        Phase 3 — price, RSI(<?= (int) RsiCalculator::DEFAULT_PERIOD ?>), trend, and CALL/PUT style signals.
+        Phase 4 — RSI bias + simple strike CALL/PUT strength (no real options pricing).
       </p>
     </header>
 
@@ -239,6 +273,9 @@ function format_price(string $market, float|string $price): string
                 default => 'action-wait',
             };
             $rsiText = $asset['rsi'] === null ? 'n/a' : number_format((float) $asset['rsi'], 2);
+            $opt = $asset['options'];
+            $callStrengthClass = 'bias-' . strtolower($opt['call']['strength']);
+            $putStrengthClass = 'bias-' . strtolower($opt['put']['strength']);
           ?>
           <article class="asset">
             <div class="asset-top">
@@ -262,15 +299,41 @@ function format_price(string $market, float|string $price): string
               → <span class="<?= $actionClass ?>"><?= htmlspecialchars($asset['action'], ENT_QUOTES, 'UTF-8') ?></span>
             </p>
 
+            <div class="options">
+              <div class="strike">
+                Strike: <?= htmlspecialchars(format_price($asset['market'], $opt['strike']), ENT_QUOTES, 'UTF-8') ?>
+              </div>
+              <div class="bias-row">
+                <span>Call Bias:</span>
+                <strong class="<?= htmlspecialchars($callStrengthClass, ENT_QUOTES, 'UTF-8') ?>">
+                  <?= htmlspecialchars($opt['call']['strength'], ENT_QUOTES, 'UTF-8') ?>
+                  (<?= htmlspecialchars($opt['call']['note'], ENT_QUOTES, 'UTF-8') ?>)
+                </strong>
+              </div>
+              <div class="bias-row">
+                <span>Put Bias:</span>
+                <strong class="<?= htmlspecialchars($putStrengthClass, ENT_QUOTES, 'UTF-8') ?>">
+                  <?= htmlspecialchars($opt['put']['strength'], ENT_QUOTES, 'UTF-8') ?>
+                  (<?= htmlspecialchars($opt['put']['note'], ENT_QUOTES, 'UTF-8') ?>)
+                </strong>
+              </div>
+              <p class="hint">
+                Call = price ABOVE strike · Put = price BELOW strike
+                <?php if ($opt['rsi_bias'] !== 'NONE'): ?>
+                  · RSI tilt: <?= htmlspecialchars($opt['rsi_bias'], ENT_QUOTES, 'UTF-8') ?>
+                <?php endif; ?>
+              </p>
+            </div>
+
             <div class="meta">As of <?= htmlspecialchars($asset['last_date'], ENT_QUOTES, 'UTF-8') ?></div>
           </article>
         <?php endforeach; ?>
       </section>
 
       <p class="legend">
-        RSI ≥ <?= (int) RsiCalculator::OVERBOUGHT ?> → Overbought → Consider PUT ·
-        RSI ≤ <?= (int) RsiCalculator::OVERSOLD ?> → Oversold → Consider CALL ·
-        otherwise Wait / Hold
+        RSI &gt; <?= (int) RsiCalculator::OVERBOUGHT ?> → PUT bias ·
+        RSI &lt; <?= (int) RsiCalculator::OVERSOLD ?> → CALL bias ·
+        Strength from distance to strike vs recent realistic move (no option pricing).
       </p>
     <?php endif; ?>
   </main>

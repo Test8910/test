@@ -99,6 +99,30 @@ cd trading/public
 php -S 127.0.0.1:8081
 ```
 
-## Next phases (planned)
+## Phase 4 — Options bias (no pricing)
 
-- Phase 4: charts, RSI history, richer options insight
+Simple logic (no option chain / Greeks):
+
+- RSI > 70 → market high → **PUT bias**
+- RSI < 30 → market low → **CALL bias**
+- Suggest a nearby strike above spot
+- Score Call vs Put strength from distance vs a rough realistic move
+
+```bash
+php bin/options_bias.php
+php bin/options_bias.php --price=785 --strike=792 --rsi=72
+```
+
+Example output idea:
+
+```
+Price  = 785
+Strike = 792
+Call Bias: Weak (far OTM)
+Put Bias:  Strong (closer to realistic move)
+```
+
+## Next (optional)
+
+- Charts / RSI history
+- Real option-chain integration later
