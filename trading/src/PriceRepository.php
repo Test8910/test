@@ -81,6 +81,27 @@ final class PriceRepository
     }
 
     /**
+     * Ordered closes for RSI (oldest → newest).
+     *
+     * @return list<float>
+     */
+    public function closes(string $symbol): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT close
+             FROM prices
+             WHERE symbol = :symbol
+             ORDER BY date ASC'
+        );
+        $stmt->execute([':symbol' => $symbol]);
+
+        return array_map(
+            static fn (array $row): float => (float) $row['close'],
+            $stmt->fetchAll()
+        );
+    }
+
+    /**
      * @return list<array{symbol: string, bars: int, first_date: string, last_date: string, last_close: string}>
      */
     public function summary(): array
@@ -102,5 +123,33 @@ final class PriceRepository
                 ORDER BY symbol';
 
         return $this->pdo->query($sql)->fetchAll();
+    }
+
+    /**
+     * Summary rows enriched with latest RSI(14) and signal.
+     *
+     * @return list<array{
+     *   symbol: string,
+     *   bars: int,
+     *   first_date: string,
+     *   last_date: string,
+     *   last_close: string,
+     *   rsi: ?float,
+     *   signal: string
+     * }>
+     */
+    public function summaryWithRsi(int $period = RsiCalculator::DEFAULT_PERIOD): array
+    {
+        $rows = [];
+        foreach ($this->summary() as $row) {
+            $rsi = RsiCalculator::calculateRSI($this->closes($row['symbol']), $period);
+            $rows[] = [
+                ...$row,
+                'rsi' => $rsi,
+                'signal' => RsiCalculator::signal($rsi),
+            ];
+        }
+
+        return $rows;
     }
 }

@@ -66,8 +66,27 @@ php -S 127.0.0.1:8081
 # open http://127.0.0.1:8081
 ```
 
+## Phase 2 — RSI
+
+Compute RSI(14) from stored closes only:
+
+```bash
+php bin/calculate_rsi.php
+php bin/calculate_rsi.php --symbol=QQQ
+```
+
+Core logic lives in `src/RsiCalculator.php`:
+1. Price changes → gains / losses  
+2. Seed averages over the first 14 changes (SMA)  
+3. RS = avgGain / avgLoss → RSI  
+4. Later bars use Wilder smoothing (standard RSI)
+
+Dashboard shows RSI plus basic signals:
+- **overbought** ≥ 70  
+- **oversold** ≤ 30  
+- **neutral** otherwise  
+
 ## Next phases (planned)
 
-- Phase 2: RSI from close prices
-- Phase 3: Calls vs Puts insight + overbought/oversold signals
-- Phase 4: full dashboard UI
+- Phase 3: Calls vs Puts insight
+- Phase 4: fuller dashboard UI (charts, history)
