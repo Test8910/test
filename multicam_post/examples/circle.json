@@ -1,0 +1,30 @@
+{
+  "program_name": "five_inch_circle",
+  "comment": "5in clockwise circle, tool 3, absolute I/J center",
+  "units": "inch",
+  "spindle_rpm": 18000,
+  "safe_z": -0.5,
+  "approach_z": -0.1,
+  "operations": [
+    {
+      "tool": 3,
+      "plunge_ipm": 60,
+      "feed_ipm": 120,
+      "contours": [
+        {
+          "start": { "x": 2.5, "y": 5.0 },
+          "depth": 0.4,
+          "moves": [
+            {
+              "type": "arc_cw",
+              "x": 2.5,
+              "y": 5.0,
+              "i": 2.5,
+              "j": 2.5
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
