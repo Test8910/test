@@ -1,0 +1,48 @@
+{
+  "program_name": "square_then_circle",
+  "comment": "Multi-tool sample: T1 square then T3 circle",
+  "units": "inch",
+  "spindle_rpm": 18000,
+  "safe_z": -0.5,
+  "approach_z": -0.1,
+  "operations": [
+    {
+      "tool": 1,
+      "plunge_ipm": 60,
+      "feed_ipm": 200,
+      "contours": [
+        {
+          "start": { "x": 0.0, "y": 0.0 },
+          "depth": 0.25,
+          "moves": [
+            { "type": "line", "x": 5.0, "y": 0.0 },
+            { "type": "line", "x": 5.0, "y": 5.0 },
+            { "type": "line", "x": 0.0, "y": 5.0 },
+            { "type": "line", "x": 0.0, "y": 0.0 }
+          ]
+        }
+      ]
+    },
+    {
+      "tool": 3,
+      "spindle_rpm": 18000,
+      "plunge_ipm": 60,
+      "feed_ipm": 120,
+      "contours": [
+        {
+          "start": { "x": 2.5, "y": 5.0 },
+          "depth": 0.4,
+          "moves": [
+            {
+              "type": "arc_cw",
+              "x": 2.5,
+              "y": 5.0,
+              "i": 2.5,
+              "j": 2.5
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

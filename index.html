@@ -3,13 +3,79 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hello World</title>
+  <title>MultiCam CNC Post Processor</title>
+  <style>
+    :root {
+      --ink: #1a1f24;
+      --muted: #5a6570;
+      --paper: #f3f1ec;
+      --accent: #0f6a5a;
+      --rule: #d4d0c8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 80% 50% at 10% -10%, #dce8e4 0%, transparent 55%),
+        radial-gradient(ellipse 60% 40% at 100% 0%, #e8e2d6 0%, transparent 50%),
+        var(--paper);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+    main {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 4rem 1.5rem 5rem;
+    }
+    h1 {
+      font-family: "IBM Plex Serif", Georgia, serif;
+      font-weight: 600;
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      letter-spacing: -0.02em;
+      margin: 0 0 0.75rem;
+    }
+    p { color: var(--muted); margin: 0 0 1.25rem; }
+    .cta {
+      display: inline-block;
+      margin-top: 0.5rem;
+      padding: 0.65rem 1.1rem;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 4px;
+    }
+    code {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.92em;
+      background: #e8e6e0;
+      padding: 0.1em 0.35em;
+      border-radius: 3px;
+    }
+    ul { padding-left: 1.2rem; color: var(--muted); }
+    hr { border: 0; border-top: 1px solid var(--rule); margin: 2rem 0; }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Serif:wght@600&display=swap" rel="stylesheet" />
 </head>
 <body>
-  <h1>Hello World</h1>
-  <h1>Hello World</h1>
-  <h1>Hello World</h1>
-  <h1>Hello World</h1>
-  <h1>Hello World</h1>
+  <main>
+    <h1>MultiCam CNC Post</h1>
+    <p>
+      Convert CAM-neutral toolpath JSON into MultiCam JobServer and A2MC/AMC
+      <code>.cnc</code> G-code.
+    </p>
+    <ul>
+      <li><strong>classic</strong> — M90 / M12 / M22 / M02, absolute I/J</li>
+      <li><strong>a2mc</strong> — non-modal Fanuc-style for AU Toolpath</li>
+    </ul>
+    <hr />
+    <p>Install and run from the repository:</p>
+    <p><code>pip install -e ".[dev]" && multicam-post multicam_post/examples/square.json --stdout</code></p>
+    <a class="cta" href="https://github.com/test8910/test">View repository</a>
+  </main>
 </body>
 </html>

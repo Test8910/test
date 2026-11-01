@@ -1,0 +1,2 @@
+[console_scripts]
+multicam-post = multicam_post.cli:main

@@ -1,0 +1,28 @@
+{
+  "program_name": "five_inch_square",
+  "comment": "Sample matching MultiCam JobServer 5in square ATC pattern",
+  "units": "inch",
+  "spindle_rpm": 18000,
+  "safe_z": -0.5,
+  "approach_z": -0.1,
+  "home_xy": { "x": 0.0, "y": 0.0 },
+  "operations": [
+    {
+      "tool": 1,
+      "plunge_ipm": 60,
+      "feed_ipm": 200,
+      "contours": [
+        {
+          "start": { "x": 0.0, "y": 0.0 },
+          "depth": 0.25,
+          "moves": [
+            { "type": "line", "x": 5.0, "y": 0.0 },
+            { "type": "line", "x": 5.0, "y": 5.0 },
+            { "type": "line", "x": 0.0, "y": 5.0 },
+            { "type": "line", "x": 0.0, "y": 0.0 }
+          ]
+        }
+      ]
+    }
+  ]
+}
